@@ -1,0 +1,270 @@
+<?php
+
+if (!defined('PS_LOG')) {
+  define('PS_LOG', 'paystand.log');
+}
+if (!defined('PS_LIVE_URL')) {
+  define('PS_LIVE_URL', 'https://app.paystand.com');
+}
+if (!defined('PS_SANDBOX_URL')) {
+  define('PS_SANDBOX_URL', 'https://dev.paystand.biz');
+}
+
+$order = new Mage_Sales_Model_Order();
+$session = Mage::getSingleton('checkout/session');
+$order_id = $session->getLastRealOrderId();
+$order->loadByIncrementId($order_id);
+
+$org_id = Mage::getStoreConfig('payment/paystandgateway/org_id');
+if (empty($org_id)) {
+  Mage::log('ERROR: org_id not defined in system configuration.', null, PS_LOG);
+}
+Mage::log('org_id: ' . $org_id, null, PS_LOG);
+
+$api_key = Mage::getStoreConfig('payment/paystandgateway/api_key');
+if (empty($api_key)) {
+  Mage::log('ERROR: api_key not defined in system configuration.', null, PS_LOG);
+}
+
+$use_sandbox = Mage::getStoreConfig('payment/paystandgateway/use_sandbox');
+if ($use_sandbox) {
+  $paystand_url = PS_SANDBOX_URL;
+} else {
+  $paystand_url = PS_LIVE_URL;
+}
+Mage::log('paystand_url: ' . $paystand_url, null, PS_LOG);
+
+$return_url = $this->getUrl('checkout/onepage/success');
+
+$currency = $order->getBaseCurrencyCode();
+$pre_fee_total = $order->getBaseGrandTotal();
+Mage::log('pre_fee_total: ' . $pre_fee_total, null, PS_LOG);
+$shipping_handling = $order->getBaseShippingAmount();
+$tax = $order->getBaseTaxAmount();
+
+// Convert to pennies
+$pre_fee_total = round($pre_fee_total * 100.0);
+$shipping_handling = round($shipping_handling * 100.0);
+$tax = round($tax * 100.0);
+$subtotal = $pre_fee_total - $shipping_handling - $tax;
+
+$final_item_name = 'Payment for Order#: ' . $order_id;
+$items = $order->getAllItems();
+foreach ($items as $item) {
+  $name = $item->getName();
+  $qty = $item->getQtyOrdered();
+  $qtyi = intval($qty);
+  $qtyf = floatval($qty);
+  if ($qtyi == $qtyf) {
+    $qty = $qtyi;
+  }
+  $final_item_name .= ", " . $qty . ' x ' . $name;
+}
+if (strlen($final_item_name) > 127) {
+  $final_item_name = substr($final_item_name, 0, 124) . '...';
+}
+$final_item_name = html_entity_decode($final_item_name, ENT_NOQUOTES,
+    'UTF-8');
+Mage::log('final_item_name: ' . $final_item_name, null, PS_LOG);
+
+$addr = $order->getBillingAddress();
+$first_name = $addr->getData('firstname');
+$last_name = $addr->getData('lastname');
+$billing_full_name = trim($first_name . ' ' . $last_name);
+$billing_email_address = $addr->getData('email');
+$billing_street = $addr->getData('street');
+$billing_city = $addr->getData('city');
+$billing_state_name = $addr->getData('region');
+
+$state_codes = array(
+    'alabama' => 'AL',
+    'alaska' => 'AK',
+    'arizona' => 'AZ',
+    'arkansas' => 'AR',
+    'california' => 'CA',
+    'colorado' => 'CO',
+    'connecticut' => 'CT',
+    'delaware' => 'DE',
+    'district of columbia' => 'DC',
+    'florida' => 'FL',
+    'georgia' => 'GA',
+    'hawaii' => 'HI',
+    'idaho' => 'ID',
+    'illinois' => 'IL',
+    'indiana' => 'IN',
+    'iowa' => 'IA',
+    'kansas' => 'KS',
+    'kentucky' => 'KY',
+    'louisiana' => 'LA',
+    'maine' => 'ME',
+    'maryland' => 'MD',
+    'massachusetts' => 'MA',
+    'michigan' => 'MI',
+    'minnesota' => 'MN',
+    'mississippi' => 'MS',
+    'missouri' => 'MO',
+    'montana' => 'MT',
+    'nebraska' => 'NE',
+    'nevada' => 'NV',
+    'new hampshire' => 'NH',
+    'new jersey' => 'NJ',
+    'new mexico' => 'NM',
+    'new york' => 'NY',
+    'north carolina' => 'NC',
+    'north dakota' => 'ND',
+    'ohio' => 'OH',
+    'oklahoma' => 'OK',
+    'oregon' => 'OR',
+    'pennsylvania' => 'PA',
+    'rhode island' => 'RI',
+    'south carolina' => 'SC',
+    'south dakota' => 'SD',
+    'tennessee' => 'TN',
+    'texas' => 'TX',
+    'utah' => 'UT',
+    'vermont' => 'VT',
+    'virginia' => 'VA',
+    'washington' => 'WA',
+    'west virginia' => 'WV',
+    'wisconsin' => 'WI',
+    'wyoming' => 'WY'
+);
+$billing_state_code = empty($state_codes[strtolower($billing_state_name)])
+    ? false : $state_codes[strtolower($billing_state_name)];
+$billing_state = empty($billing_state_code)
+    ? $billing_state_name : $billing_state_code;
+
+$billing_postalcode = $addr->getData('postcode');
+$billing_country = $addr->getData('country_id');
+$billing_phone = $addr->getData('telephone');
+
+// json_encode parameters that users can enter to protect against quotes
+// and other troublesome characters
+if (is_numeric($org_id)) {
+  // We want to pass it as a string
+  $org_id_json = '"' . $org_id . '"';
+} else {
+  // Probably bogus but maybe valid in the future
+  $org_id_json = json_encode($org_id);
+}
+$api_key_json = json_encode($api_key);
+$return_url_json = json_encode($return_url);
+$final_item_name_json = json_encode($final_item_name);
+
+$billing_full_name_json = json_encode($billing_full_name);
+$billing_email_address_json = json_encode($billing_email_address);
+$billing_street_json = json_encode($billing_street);
+$billing_city_json = json_encode($billing_city);
+$billing_state_json = json_encode($billing_state);
+$billing_postalcode_json = json_encode($billing_postalcode);
+$billing_country_json = json_encode($billing_country);
+$billing_phone_json = json_encode($billing_phone);
+
+$markup = <<<EOF
+<h2>Opening PayStand Checkout</h2>
+<div id="paystand_element_id"></div>
+<script type="text/javascript">
+
+  var PayStand = PayStand || {};
+  PayStand.checkouts = PayStand.checkouts || [];
+  PayStand.load = PayStand.load || function(){};
+
+  PayStand.checkoutUpdated = function() {
+    console.log('checkoutUpdated called.');
+  }
+
+  PayStand.checkoutComplete = function() {
+    console.log('checkoutComplete called.');
+    window.top.location.href = {$return_url_json};
+  }
+
+  var autoCheckout = {
+    api_key: {$api_key_json},
+    org_id: {$org_id_json},
+    element_ids: ["paystand_element_id"],
+    data_source: "org_defined",
+    st_platform: "magento-1.0.1",
+    checkout_type: "button",
+    redirect_url: {$return_url_json},
+    currency: "{$currency}",
+    amount: "{$subtotal}",
+    shipping_handling: "{$shipping_handling}",
+    tax: "{$tax}",
+    items: [
+      {
+        title: {$final_item_name_json},
+        quantity: "1",
+        item_price: "{$subtotal}"
+      }
+    ],
+    billing: {
+      full_name: {$billing_full_name_json},
+      email_address: {$billing_email_address_json},
+      street: {$billing_street_json},
+      city: {$billing_city_json},
+      postalcode: {$billing_postalcode_json},
+      state: {$billing_state_json},
+      country: {$billing_country_json},
+      shipping_same: true
+    },
+    meta: {
+      order_id: "{$order_id}"
+    }
+  }
+
+  var buttonCheckout = {
+    api_key: {$api_key_json},
+    org_id: {$org_id_json},
+    element_ids: ["paystand_element_id"],
+    data_source: "org_defined",
+    st_platform: "magento-1.0.1",
+    checkout_type: "button",
+    redirect_url: {$return_url_json},
+    button_options: {
+      button_name: 'Pay with PayStand',
+      input: false,
+      variants: false
+    },
+    currency: "{$currency}",
+    amount: "{$subtotal}",
+    shipping_handling: "{$shipping_handling}",
+    tax: "{$tax}",
+    items: [
+      {
+        title: {$final_item_name_json},
+        quantity: "1",
+        item_price: "{$subtotal}"
+      }
+    ],
+    billing: {
+      full_name: {$billing_full_name_json},
+      email_address: {$billing_email_address_json},
+      street: {$billing_street_json},
+      city: {$billing_city_json},
+      postalcode: {$billing_postalcode_json},
+      state: {$billing_state_json},
+      country: {$billing_country_json},
+      shipping_same: true
+    },
+    meta: {
+      order_id: "{$order_id}"
+    }
+  }
+
+  PayStand.checkouts.push(buttonCheckout);
+
+  PayStand.onLoad = function() {
+    PayStand.execute(autoCheckout);
+  };
+
+  PayStand.script = document.createElement('script');
+  PayStand.script.type = 'text/javascript';
+  PayStand.script.async = true;
+  PayStand.script.src = '{$paystand_url}/js/checkout.js';
+  var s = document.getElementsByTagName('script')[0];
+  s.parentNode.insertBefore(PayStand.script, s);
+</script>
+EOF;
+
+echo $markup;
+

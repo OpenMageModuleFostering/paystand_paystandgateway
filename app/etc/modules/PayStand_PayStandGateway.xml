@@ -1,0 +1,12 @@
+<config>
+  <modules>
+    <PayStand_PayStandGateway>
+      <active>true</active>
+      <codePool>local</codePool>
+      <depends>
+        <Mage_Payment />
+      </depends>
+    </PayStand_PayStandGateway>
+  </modules>
+</config>
+

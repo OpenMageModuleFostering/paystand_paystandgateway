@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+    <name>PayStand_PayStandGateway</name>
+    <version>1.0.2</version>
+    <stability>stable</stability>
+    <license uri="http://www.apache.org/licenses/LICENSE-2.0">Apache Software License</license>
+    <channel>community</channel>
+    <extends/>
+    <summary>The PayStand payment gateway provides next generation payment processing for Card, eCheck, and Bitcoin.</summary>
+    <description>PayStand provides modern payment processing with multiple payment methods including Credit Cards, eCheck, and Bitcoin.  Requires Magento 1.5+ and a PayStand account. Sign up for an account at paystand.com</description>
+    <notes>This is the initial version. Please provide feedback to support@paystand.com</notes>
+    <authors><author><name>Scott Campbell</name><user>paystand</user><email>developers@paystand.com</email></author></authors>
+    <date>2015-12-31</date>
+    <time>05:22:12</time>
+    <contents><target name="magedesign"><dir name="frontend"><dir name="base"><dir name="default"><dir name="template"><dir name="paystandgateway"><file name="redirect.phtml" hash="6bbf31e22f005f6dedaa0398d6ac5764"/></dir></dir></dir></dir></dir></target><target name="magelocal"><dir name="PayStand"><dir name="PayStandGateway"><dir name="Helper"><file name="Data.php" hash="a9c3c81147c6f2ac30498b2e94f16e7a"/></dir><dir name="Model"><file name="PaymentMethod.php" hash="a4371f08a9efd412073fe4038ac2e0b2"/></dir><dir name="controllers"><file name="PaymentController.php" hash="83adb50fb7535d57324c200bff0bdf4b"/></dir><dir name="etc"><file name="config.xml" hash="e364cf4ae17cabcfd8aa39dce34207db"/><file name="system.xml" hash="d88e4dbf2ce6cdc569478033f01805ee"/></dir></dir></dir></target><target name="mageetc"><dir name="modules"><file name="PayStand_PayStandGateway.xml" hash="79a872581f3fe52e1dd3e9b0d34b1038"/></dir></target></contents>
+    <compatible/>
+    <dependencies><required><php><min>5.2.0</min><max>6.0.0</max></php><package><name>Mage_Core_Modules</name><channel>community</channel><min>1.6.0</min><max>1.9.2</max></package><extension><name>Core</name><min/><max/></extension></required></dependencies>
+</package>

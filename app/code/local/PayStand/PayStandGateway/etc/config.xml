@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<config>
+  <modules>
+     <PayStand_PayStandGateway>
+      <version>1.0.2</version>
+     </PayStand_PayStandGateway>
+  </modules>
+ 
+  <global>
+    <blocks>
+      <paystandgateway>
+        <class>PayStand_PayStandGateway_Block</class>
+      </paystandgateway>
+    </blocks>
+ 
+    <models>
+      <paystandgateway>
+        <class>PayStand_PayStandGateway_Model</class>
+      </paystandgateway>
+    </models>
+ 
+    <resources>
+      <paystandgateway_setup>
+        <setup>
+          <module>PayStand_PayStandGateway</module>
+        </setup>
+        <connection>
+          <use>core_setup</use>
+        </connection>
+      </paystandgateway_setup>
+      <paystandgateway_write>
+        <connection>
+          <use>core_write</use>
+        </connection>
+      </paystandgateway_write>
+      <paystandgateway_read>
+         <connection>
+        <use>core_read</use>
+        </connection>
+      </paystandgateway_read>
+    </resources>
+
+    <helpers>
+      <paystandgateway>
+        <class>PayStand_PayStandGateway_Helper</class>
+      </paystandgateway>
+    </helpers>
+  </global>
+ 
+  <default>
+    <payment>
+      <paystandgateway>
+        <active>1</active>
+        <model>paystandgateway/paymentMethod</model>
+        <order_status>pending</order_status>
+        <title>PayStand (Card, eCheck, Bitcoin)</title>
+ 
+        <payment_action>sale</payment_action>
+        <allowspecific>0</allowspecific>
+        <sort_order>1</sort_order>
+      </paystandgateway>
+     </payment>
+  </default>
+
+  <frontend>
+    <routers>
+      <paystandgateway>
+        <use>standard</use>
+        <args>
+          <module>PayStand_PayStandGateway</module>
+          <frontName>paystandgateway</frontName>
+        </args>
+      </paystandgateway>
+    </routers>
+  </frontend>
+</config>
