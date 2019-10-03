@@ -1,16 +1,19 @@
 {
-    "name": "OpenMageModuleFostering/PayStand_PayStandGateway",
+    "name": "OpenMageModuleFostering\/PayStand_PayStandGateway",
     "type": "magento-module",
     "license": "Apache-Software-License",
     "homepage": "",
     "description": "The PayStand payment gateway provides next generation payment processing for Card, eCheck, and Bitcoin.",
     "authors": [
-    {
-        "name": "Scott Campbell",
-        "email": "developers@paystand.com"
-    }
-],
+        {
+            "name": "Scott Campbell",
+            "email": "developers@paystand.com"
+        }
+    ],
     "suggest": {
-        "magento-hackathon/magento-composer-installer": "*"
-    }
+        "magento-hackathon\/magento-composer-installer": "*"
+    },
+    "keywords": [
+        "openmage-module"
+    ]
 }
