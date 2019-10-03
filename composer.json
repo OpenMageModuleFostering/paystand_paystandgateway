@@ -1,5 +1,5 @@
 {
-    "name": "OpenMageModuleFostering\/PayStand_PayStandGateway",
+    "name": "openmage-module-fostering\/paystand_paystandgateway",
     "type": "magento-module",
     "license": "Apache-Software-License",
     "homepage": "",
